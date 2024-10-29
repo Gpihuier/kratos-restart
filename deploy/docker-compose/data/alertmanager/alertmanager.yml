@@ -1,0 +1,29 @@
+global:
+  resolve_timeout: 1d # 定义告警在未更新状态时的超时时间，之后会被视为已解决
+
+route:
+  group_by: [ 'alertname', 'job', 'instance' ]
+  group_wait: 30s      # 定义分组等待时间 group_by标签的告警加入分组的机会
+  group_interval: 5m   # 定义告警分组时间间隔 再次发送更新通知的间隔时间。这确保了接收器不会频繁地接收到关于同一组告警的更新
+  repeat_interval: 5m  # 定义了在告警状态持续期间，重复发送相同通知的最小间隔时间
+  receiver: 'email-receiver' # 接收器
+
+receivers:
+  - name: 'email-receiver'
+    email_configs:
+      - to: 'gpihuier@qq.com'
+        from: '414258965@qq.com'
+        smarthost: 'smtp.qq.com:465'
+        auth_username: '414258965@qq.com'
+        auth_password: 'njisrlalcuuhbihf'
+        send_resolved: true
+        tls_config:
+          insecure_skip_verify: false
+        require_tls: false
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: [ 'alertname', 'instance' ]

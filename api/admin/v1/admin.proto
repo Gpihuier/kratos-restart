@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package api.admin.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "kratos-restart/api/admin/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.admin.v1";
+
+service Admin {
+  rpc Login(LoginRequest) returns (LoginReply) {
+    option (google.api.http) = {
+      post: "/admin/v1/login"
+      body: "*"
+    };
+  }
+
+  rpc Logout (LogoutReq) returns (LogoutReply) {
+    option (google.api.http) = {
+      post: "/admin/v1/logout"
+      body: "*"
+    };
+  }
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserReply) {
+    option (google.api.http) = {
+      post: "/admin/v1/create_user"
+      body: "*"
+    };
+  }
+
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginReply {
+  string token = 1;
+  string message = 2;
+}
+
+message LogoutReq{}
+
+message LogoutReply{}
+
+message CreateUserRequest {
+  string username = 1;
+  string password = 2;
+  string nickname = 3;
+}
+message CreateUserReply {
+  string message = 1;
+}

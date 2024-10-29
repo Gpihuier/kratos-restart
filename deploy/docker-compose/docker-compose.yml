@@ -1,0 +1,133 @@
+version: '3.9'
+
+services:
+
+  consul:
+    image: hashicorp/consul:latest
+    container_name: consul-kratos-restart
+    restart: unless-stopped
+    volumes:
+      - ./data/consul/data:/consul/data
+    ports:
+      - "8500:8500" # Expose the HTTP API on port 8500
+      - "8600:8600/tcp" # Expose the DNS service on port 8600 (TCP)
+      - "8600:8600/udp" # Expose the DNS service on port 8600 (UDP)
+    environment:
+      CONSUL_BIND_INTERFACE: eth0
+    networks:
+      - micro_server
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: jaeger-kratos-restart
+    restart: unless-stopped
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "5778:5778"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "9411:9411"
+      - "14250:14250"
+      - "14268:14268"
+      - "14269:14269"
+      - "16686:16686"
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+
+
+  prometheus:
+    image: prom/prometheus:v2.45.6
+    container_name: prometheus-kratos-restart
+    restart: unless-stopped
+    volumes:
+      - ./data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus/prometheus_data:/prometheus # 引用定义好的数据卷
+      - ./data/prometheus/rules:/etc/prometheus/rules
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - '9090:9090'
+    networks:
+      - micro_server
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider --quiet http://localhost:9090/-/ready || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus-node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: prometheus-node-exporter-kratos-restart
+    restart: unless-stopped
+    command:
+      - '--web.listen-address=0.0.0.0:9100'
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+    volumes:
+      - '/:/host:ro'
+    ports:
+      - '9100:9100'
+    networks:
+      - micro_server
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider --quiet http://localhost:9100/metrics || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:9.5.20
+    container_name: grafana-kratos-restart
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - '3000:3000'
+    networks:
+      - micro_server
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:3000/api/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  alertmanager:
+    image: quay.io/prometheus/alertmanager
+    container_name: alertmanager-dev-kratos-restart
+    restart: unless-stopped
+    volumes:
+      - ./data/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./data/alertmanager/data:/alertmanager/data
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager/data'
+    ports:
+      - '9093:9093'
+    networks:
+      - micro_server
+    healthcheck:
+      test: [ ]
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysqld-exporter-kratos-restart
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "root:root@(10.10.50.163:3306)/?parseTime=true&loc=Local"
+    ports:
+      - "9104:9104"
+    networks:
+      - micro_server
+
+volumes:
+  clickhouse_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  micro_server:
