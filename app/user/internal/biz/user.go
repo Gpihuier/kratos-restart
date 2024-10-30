@@ -26,6 +26,5 @@ func NewUserUseCase(repo UserRepo, logger log.Logger) *UserUseCase {
 }
 
 func (uc *UserUseCase) CreateUser(ctx context.Context, u *User) (*User, error) {
-	uc.log.WithContext(ctx).Infof("CreateUser: %v", u.Username)
 	return uc.repo.CreateUser(ctx, u)
 }

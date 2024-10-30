@@ -23,9 +23,9 @@ import (
 // go build -ldflags "-X main.Version=x.y.z"
 var (
 	// Name is the name of the compiled software.
-	Name string = "user.service"
+	Name string = "kratos-restart.user"
 	// Version is the version of the compiled software.
-	Version string = "V1"
+	Version string = "v1"
 	// flagconf is the config flag.
 	flagconf string
 

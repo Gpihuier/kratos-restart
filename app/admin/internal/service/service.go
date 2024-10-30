@@ -36,3 +36,17 @@ func (s *AdminService) Login(ctx context.Context, in *v1.LoginRequest) (*v1.Logi
 		Message: fmt.Sprintf("Hello: %s, Welcome to you!", in.Username),
 	}, nil
 }
+
+func (s *AdminService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserReply, error) {
+	cu, err := s.uc.CreateUser(ctx, &biz.User{
+		Username: in.Username,
+		Password: in.Password,
+		Nickname: in.Nickname,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &v1.CreateUserReply{
+		Message: fmt.Sprintf("Hello: %s, Welcome to you!", cu.Nickname),
+	}, err
+}
